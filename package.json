@@ -1,9 +1,9 @@
 {
-  "name": "circuitbreaker",
+  "name": "circuit-breaker",
   "version": "0.0.1",
   "description": "A ChatGPT assisted thread safe Circuit Breaker pattern to run in Multi-Threaded Node.js Applications",
   "type": "module",
-  "main": "./src/",
+  "main": "./src/CircuitBreaker.js",
   "directories": {
     "test": "mocha --require esm"
   },
@@ -13,14 +13,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jeffcaradona/threaded-worker-w-breaker.git"
+    "url": "git+https://github.com/jeffcaradona/CircuitBreaker.git"
   },
   "author": "Jeff Caradona",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jeffcaradona/threaded-worker-w-breaker/issues"
+    "url": "https://github.com/jeffcaradona/CircuitBreaker/issues"
   },
-  "homepage": "https://github.com/jeffcaradona/threaded-worker-w-breaker#readme",
+  "homepage": "https://github.com/jeffcaradona/CircuitBreaker#readme",
   "devDependencies": {    
     "c8": "^10.1.3",
     "chai": "^5.1.2",

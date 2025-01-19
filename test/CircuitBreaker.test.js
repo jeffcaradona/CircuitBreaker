@@ -2,7 +2,7 @@ import { expect } from "chai";
 import CircuitBreaker, {
   CircuitBreakerKeys,
   CircuitBreakerStates,
-} from "../src/lib/CircuitBreaker.js";
+} from "../src/CircuitBreaker.js";
 
 describe('CircuitBreaker', () => {
   let circuitBreaker;
