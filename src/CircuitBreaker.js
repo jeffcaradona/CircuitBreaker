@@ -7,7 +7,11 @@ export const CircuitBreakerKeys = {
   FAILURE_COUNT: 0,
   LAST_FAILURE_TIME: 1,
   STATE: 2,
+  TOTAL_REQUEST_COUNT: 3,
+  SUCCESS_COUNT: 4,
+  LAST_SUCCESS_TIME: 5,
 };
+
 /**
  * Enum for CircuitBreaker states.
  * @readonly
@@ -18,6 +22,7 @@ export const CircuitBreakerStates = {
   OPEN: 1,
   HALF_OPEN: 2,
 };
+
 /**
  * Class representing a CircuitBreaker.
  */
@@ -29,21 +34,32 @@ class CircuitBreaker {
    * @param {number} resetTimeout - The time in milliseconds to wait before transitioning from open to half-open.
    * @param {Function} [openFallback=null] - The fallback function to execute when the circuit is open.
    * @param {Function} [failureFallback=null] - The fallback function to execute when the task fails.
-   */  
-  constructor(sharedArray, failureThreshold, resetTimeout, openFallback = null, failureFallback = null) {
+   */
+  constructor(
+    sharedArray,
+    failureThreshold,
+    resetTimeout,
+    openFallback = null,
+    failureFallback = null
+  ) {
     this.sharedArray = sharedArray;
     this.failureThreshold = failureThreshold;
     this.resetTimeout = resetTimeout;
     this.openFallback = openFallback;
     this.failureFallback = failureFallback;
-    
+
     Atomics.store(
       this.sharedArray,
       CircuitBreakerKeys.STATE,
       CircuitBreakerStates.CLOSED
     );
     Atomics.store(this.sharedArray, CircuitBreakerKeys.FAILURE_COUNT, 0);
+    Atomics.store(this.sharedArray, CircuitBreakerKeys.LAST_FAILURE_TIME, 0);
+    Atomics.store(this.sharedArray, CircuitBreakerKeys.TOTAL_REQUEST_COUNT, 0);
+    Atomics.store(this.sharedArray, CircuitBreakerKeys.SUCCESS_COUNT, 0);
+    Atomics.store(this.sharedArray, CircuitBreakerKeys.LAST_SUCCESS_TIME, 0);
   }
+
   /**
    * Execute a task with circuit breaker protection.
    * @param {Function} task - The task to execute.
@@ -51,17 +67,30 @@ class CircuitBreaker {
    * @throws {Error} If the circuit is open and no openFallback is provided.
    */
   async execute(task) {
+    // Increment the total request count
+    Atomics.add(this.sharedArray, CircuitBreakerKeys.TOTAL_REQUEST_COUNT, 1);
+
     const state = Atomics.load(this.sharedArray, CircuitBreakerKeys.STATE);
     if (state === CircuitBreakerStates.OPEN) {
       if (this.openFallback) {
         return this.openFallback();
       }
-      throw new Error("Circuit is open"); 
+      throw new Error("Circuit is open");
     }
 
     try {
       const result = await task();
+
+      // Increment the success count if the task is successful
+      Atomics.add(this.sharedArray, CircuitBreakerKeys.SUCCESS_COUNT, 1);
+      Atomics.store(
+        this.sharedArray,
+        CircuitBreakerKeys.LAST_SUCCESS_TIME,
+        Date.now()
+      );
+      // Reset the failure count
       Atomics.store(this.sharedArray, CircuitBreakerKeys.FAILURE_COUNT, 0);
+
       return result;
     } catch (error) {
       this.onFailure();
@@ -71,6 +100,7 @@ class CircuitBreaker {
       throw error;
     }
   }
+
   /**
    * Handle task failure.
    * @private
@@ -103,7 +133,7 @@ class CircuitBreaker {
   }
 
   /**
-   * Manually transition the circuit to the half-open state. 
+   * Manually transition the circuit to the half-open state.
    */
   transitionToHalfOpen() {
     Atomics.store(
@@ -113,17 +143,59 @@ class CircuitBreaker {
     );
   }
 
+  /**
+   * Get the current state of the circuit breaker.
+   * @returns {string} The current state as a string.
+   */
   getState() {
     const state = Atomics.load(this.sharedArray, CircuitBreakerKeys.STATE);
-
     return Object.keys(CircuitBreakerStates).find(
       (key) => CircuitBreakerStates[key] === state
     );
   }
 
+  /**
+   * Get the shared buffer.
+   * @returns {ArrayBuffer} The shared array buffer.
+   */
   getSharedBuffer() {
     return this.sharedArray.buffer;
   }
+
+  /**
+   * Get the total number of requests.
+   * @returns {number} The total request count.
+   */
+  getTotalRequestCount() {
+    return Atomics.load(
+      this.sharedArray,
+      CircuitBreakerKeys.TOTAL_REQUEST_COUNT
+    );
+  }
+
+  /**
+   * Get the total number of successful requests.
+   * @returns {number} The success count.
+   */
+  getSuccessCount() {
+    return Atomics.load(this.sharedArray, CircuitBreakerKeys.SUCCESS_COUNT);
+  }
+    /**
+   * Get the timestamp of the last successful task execution.
+   * @returns {number} The last success time as a Unix timestamp (milliseconds since epoch).
+   */
+  getLastSuccessTime() {
+    return Atomics.load(this.sharedArray, CircuitBreakerKeys.LAST_SUCCESS_TIME);
+  }
+
+  /**
+   * Get the timestamp of the last task failure.
+   * @returns {number} The last failure time as a Unix timestamp (milliseconds since epoch).
+   */
+  getLastFailureTime() {
+    return Atomics.load(this.sharedArray, CircuitBreakerKeys.LAST_FAILURE_TIME);
+  }
+
 }
 
 export default CircuitBreaker;

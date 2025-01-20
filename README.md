@@ -1,99 +1,145 @@
 # CircuitBreaker.js
 
-`CircuitBreaker.js` is a JavaScript implementation of the Circuit Breaker pattern. It is designed to prevent a system from repeatedly trying to execute an operation that is likely to fail, thereby allowing it to recover from failures gracefully.
+`CircuitBreaker.js` is a JavaScript implementation of the Circuit Breaker pattern. It is designed to prevent a system from repeatedly trying to execute an operation that is likely to fail, thereby allowing it to recover from failures gracefully. The implementation also tracks metrics such as the total number of requests and successful executions for enhanced monitoring.
 
+---
 
+## Features
 
+- **Failure Threshold**: Automatically opens the circuit after a specified number of failures.
+- **Reset Timeout**: Transitions from `OPEN` to `HALF_OPEN` after a configurable timeout.
+- **Request Metrics**: Tracks total requests (`TOTAL_REQUEST_COUNT`) and successful executions (`SUCCESS_COUNT`).
+- **Custom Fallbacks**: Allows defining fallback functions for open circuit and task failure scenarios.
+- **Shared Memory Support**: Utilizes `SharedArrayBuffer` for thread-safe metrics.
+
+---
 
 ## Usage
 
 ### Importing the CircuitBreaker
 
 ```javascript
-import CircuitBreaker,{CircuitBreakerKeys} from 'circuit-breaker-js';
+import CircuitBreaker, { CircuitBreakerKeys } from "circuit-breaker-js";
 ```
 
 ### Creating a Circuit Breaker
 
 ```javascript
-const sharedArray = new Int32Array(new SharedArrayBuffer(Object.keys(CircuitBreakerKeys).length * Int32Array.BYTES_PER_ELEMENT));
-const options = {
-    failureThreshold: 5, // Number of failures before opening the circuit
-    resetTimeout: 30000, // Time to wait before attempting to reset the breaker
-    openFallback: () => console.log('Circuit is open, fallback executed'),
-    failureFallback: () => console.log('Task failed, fallback executed')
-};
+const sharedArray = new Int32Array(
+  new SharedArrayBuffer(
+    Object.keys(CircuitBreakerKeys).length * Int32Array.BYTES_PER_ELEMENT
+  )
+);
 
-const breaker = new CircuitBreaker(sharedArray, options.failureThreshold, options.resetTimeout, options.openFallback, options.failureFallback);
+const breaker = new CircuitBreaker(
+  sharedArray,
+  5, // failureThreshold
+  30000, // resetTimeout (ms)
+  () => console.log("Circuit is open, fallback executed"), // openFallback
+  () => console.log("Task failed, fallback executed") // failureFallback
+);
 ```
+
+---
 
 ### Using the Circuit Breaker
 
 ```javascript
-breaker.execute(task).then(result => {
-    console.log('Task succeeded:', result);
-}).catch(error => {
-    console.log('Task failed:', error);
-});
-
 async function task() {
-    // Perform the operation
-    if (Math.random() > 0.5) {
-        return 'Success';
-    } else {
-        throw new Error('Failure');
-    }
+  // Simulate a task with a 50% chance of failure
+  if (Math.random() > 0.5) {
+    return "Success";
+  } else {
+    throw new Error("Failure");
+  }
 }
+
+breaker
+  .execute(task)
+  .then((result) => console.log("Task succeeded:", result))
+  .catch((error) => console.log("Task failed:", error));
 ```
 
-### Events
+---
 
-You can listen to various events emitted by the Circuit Breaker:
+## Circuit Breaker Keys
 
-```javascript
-// No built-in event system, but you can use the fallback functions to handle events
-```
+- **`FAILURE_COUNT`**: Tracks the number of task failures.
+- **`LAST_FAILURE_TIME`**: Records the timestamp of the most recent failure.
+- **`STATE`**: Stores the current state (`CLOSED`, `OPEN`, `HALF_OPEN`).
+- **`TOTAL_REQUEST_COUNT`**: Tracks the total number of task executions.
+- **`SUCCESS_COUNT`**: Tracks the total number of successful task executions.
 
-## Options
-
-- `failureThreshold`: The number of failures before opening the circuit.
-- `resetTimeout`: The time in milliseconds to wait before attempting to reset the circuit breaker.
-- `openFallback`: The fallback function to execute when the circuit is open.
-- `failureFallback`: The fallback function to execute when the task fails.
+---
 
 ## Methods
 
-- `execute(task)`: Executes the task function. If the circuit is open, the openFallback function is executed instead.
-- `getState()`: Returns the current state of the circuit breaker.
-- `getSharedBuffer()`: Returns the shared buffer used by the circuit breaker.
+### `execute(task: Function): Promise<any>`
 
-## Example
+Executes the provided task. If the circuit is `OPEN`, the `openFallback` is executed instead.
+
+### `getState(): string`
+
+Returns the current state of the circuit breaker (`CLOSED`, `OPEN`, or `HALF_OPEN`).
+
+### `getSharedBuffer(): ArrayBuffer`
+
+Returns the shared buffer used for storing metrics.
+
+### `getTotalRequestCount(): number`
+
+Returns the total number of requests executed by the circuit breaker.
+
+### `getSuccessCount(): number`
+
+Returns the total number of successful task executions.
+
+---
+
+## Example with Metrics
 
 ```javascript
-import CircuitBreaker,{CircuitBreakerKeys} from 'circuit-breaker-js';
+const sharedArray = new Int32Array(
+  new SharedArrayBuffer(
+    Object.keys(CircuitBreakerKeys).length * Int32Array.BYTES_PER_ELEMENT
+  )
+);
 
-const sharedArray = new Int32Array(new SharedArrayBuffer(Object.keys(CircuitBreakerKeys).length * Int32Array.BYTES_PER_ELEMENT));
-const options = {
-    failureThreshold: 5,
-    resetTimeout: 30000,
-    openFallback: () => console.log('Circuit is open, fallback executed'),
-    failureFallback: () => console.log('Task failed, fallback executed')
-};
+const breaker = new CircuitBreaker(sharedArray, 3, 1000);
 
-const breaker = new CircuitBreaker(sharedArray, options.failureThreshold, options.resetTimeout, options.openFallback, options.failureFallback);
+(async () => {
+  try {
+    await breaker.execute(async () => {
+      if (Math.random() > 0.5) {
+        return "Success";
+      } else {
+        throw new Error("Failure");
+      }
+    });
+  } catch (error) {
+    console.log("Task failed:", error.message);
+  }
 
-breaker.execute(async () => {
-    if (Math.random() > 0.5) {
-        return 'Success';
-    } else {
-        throw new Error('Failure');
-    }
-}).then(result => {
-    console.log('Task succeeded:', result);
-}).catch(error => {
-    console.log('Task failed:', error);
-});
+  console.log("Total Requests:", breaker.getTotalRequestCount());
+  console.log("Successful Requests:", breaker.getSuccessCount());
+
+  const lastSuccess = breaker.getLastSuccessTime();
+  const lastFailure = breaker.getLastFailureTime();
+
+  console.log("Last Success Time:", new Date(lastSuccess).toISOString());
+  console.log("Last Failure Time:", new Date(lastFailure).toISOString());
+})();
 ```
+
+---
+
+## Advanced Usage
+
+### Customizing Metrics
+
+You can utilize the `TOTAL_REQUEST_COUNT` and `SUCCESS_COUNT` to monitor the circuit's performance and system health in real-time.
+
+---
 
 ## License
 
