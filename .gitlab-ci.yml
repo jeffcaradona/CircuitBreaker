@@ -10,6 +10,8 @@ sonarqube-check:
     paths:
       - .sonar/cache
   script: 
+    - npm install
+    - npm run coverage
     - sonar-scanner
   allow_failure: true
   only:
