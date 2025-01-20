@@ -1,4 +1,19 @@
+stages:
+  - test
+  - sonarqube
+
+test:
+  stage: test
+  image: node:22
+  script:
+    - npm install
+    - npm run coverage
+  artifacts:
+    paths:
+      - coverage/
+
 sonarqube-check:
+  stage: sonarqube
   image: 
     name: sonarsource/sonar-scanner-cli:4.6
     entrypoint: [""]
@@ -10,10 +25,10 @@ sonarqube-check:
     paths:
       - .sonar/cache
   script: 
-    - npm install
-    - npm run coverage
     - sonar-scanner
   allow_failure: true
   only:
     - main
     - develop
+  dependencies:
+    - test
