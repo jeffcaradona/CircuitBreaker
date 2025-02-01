@@ -36,7 +36,6 @@ sonarqube-check:
     - test
 
 #  PUBLISH TO VERDACCIO STAGE
-
 publish:
   stage: publish
   image: node:22
@@ -44,8 +43,7 @@ publish:
     - npm config set registry https://dev-verdaccio.irrational.cc
     - npm config set strict-ssl false
     - echo "//dev-verdaccio.irrational.cc/:_authToken=${NPM_AUTH_TOKEN}" > ~/.npmrc
-    - npm version patch --no-git-tag-version
-    - npm version ${CI_PIPELINE_ID} --no-git-tag-version  # Append unique build number
+    - npm version prerelease --preid=${CI_PIPELINE_ID} --no-git-tag-version  # Append pipeline ID as pre-release
     - npm publish --registry https://dev-verdaccio.irrational.cc
   only:
     - main
