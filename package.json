@@ -1,5 +1,5 @@
 {
-  "name": "circuit-breaker",
+  "name": "@jeffcaradona/circuit-breaker",
   "version": "0.0.2",
   "description": "A ChatGPT assisted thread safe Circuit Breaker pattern to run in Multi-Threaded Node.js Applications",
   "type": "module",
