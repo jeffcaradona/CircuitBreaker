@@ -29,8 +29,8 @@ sonarqube-check:
   script: 
     - sonar-scanner
   allow_failure: true
-  only:
-    - main
+  only:    
+    - dev-release
     - develop
   dependencies:
     - test
@@ -46,7 +46,7 @@ publish:
     - npm version prerelease --preid=${CI_PIPELINE_ID} --no-git-tag-version  # Append pipeline ID as pre-release
     - npm publish --registry https://dev-verdaccio.irrational.cc
   only:
-    - main
+    - dev-release
   dependencies:
     - test
 
