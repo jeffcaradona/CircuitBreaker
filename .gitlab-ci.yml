@@ -42,7 +42,7 @@ publish:
     - npm config set registry https://dev-verdaccio.irrational.cc   # Point to external Verdaccio URL
     - echo "//dev-verdaccio.irrational.cc/:_authToken=\${NPM_AUTH_TOKEN}" > ~/.npmrc  # Auth for Verdaccio
     - npm version patch --no-git-tag-version                        # Auto-increment version
-    - npm publish --tag beta                                             # Publish to Verdaccio
+    - npm publish                                       # Publish to Verdaccio
   only:
     - main
   dependencies:
