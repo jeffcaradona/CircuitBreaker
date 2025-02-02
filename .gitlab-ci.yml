@@ -1,7 +1,15 @@
+image: 
+    name: sonarsource/sonar-scanner-cli:11
+    entrypoint: [""]
+
+variables:
+  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+  GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+
 stages:
   - test
-  - sonarqube
-  - publish
+  - build-sonar
+  - publish-dev-release
 
 
 test:
@@ -14,30 +22,30 @@ test:
     paths:
       - coverage/
 
-sonarqube-check:
-  stage: sonarqube
-  image: 
-    name: sonarsource/sonar-scanner-cli:4.6
-    entrypoint: [""]
-  variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+build-sonar:
+  stage: build-sonar
+  
+  
   cache:
-    key: "${CI_JOB_NAME}"
+    policy: pull-push
+    key: "sonar-cache-$CI_COMMIT_REF_SLUG"
     paths:
-      - .sonar/cache
+      - "${SONAR_USER_HOME}/cache"
+      - sonar-scanner/
+      
   script: 
-    - sonar-scanner
+    - sonar-scanner -Dsonar.host.url="${SONAR_HOST_URL}"
   allow_failure: true
-  only:    
-    - dev-release
-    - develop
-  dependencies:
-    - test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_BRANCH == 'dev-release'
+    - if: $CI_COMMIT_BRANCH == 'develop'
+    - if: $CI_COMMIT_BRANCH == 'main'
+
 
 #  PUBLISH TO VERDACCIO STAGE
 publish:
-  stage: publish
+  stage: publish-dev-release
   image: node:22
   script:
     - npm config set registry https://dev-verdaccio.irrational.cc
