@@ -57,5 +57,3 @@ publish:
     - dev-release
   dependencies:
     - test
-
-
