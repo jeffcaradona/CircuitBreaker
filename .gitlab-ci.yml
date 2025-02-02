@@ -1,5 +1,5 @@
 variables:
-  SONAR_HOST_URL: "http://dev-sonar.irrational.cc"   # Replace with your SonarQube server URL
+  SONAR_HOST_URL: "${SONAR_HOST_URL}"   # Replace with your SonarQube server URL
   SONAR_TOKEN: "${SONAR_TOKEN}"                      # Set this token in GitLab CI/CD variables
 
 stages:
