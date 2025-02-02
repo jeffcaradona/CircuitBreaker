@@ -44,7 +44,6 @@ build-sonar:
 
 
 
-#  PUBLISH TO VERDACCIO STAGE
 publish:
   stage: publish-dev-release
   image: node:22
@@ -52,7 +51,17 @@ publish:
     - npm config set registry https://dev-verdaccio.irrational.cc
     - npm config set strict-ssl false
     - echo "//dev-verdaccio.irrational.cc/:_authToken=${NPM_AUTH_TOKEN}" > ~/.npmrc
-    - npm version prerelease --preid=${CI_PIPELINE_ID} --no-git-tag-version  # Append pipeline ID as pre-release
+
+    # Extract the current version from package.json
+    - VERSION=$(node -p "require('./package.json').version")
+    
+    # Append the CI_PIPELINE_ID to create the pre-release version
+    - PRE_RELEASE_VERSION="${VERSION}-${CI_PIPELINE_ID}"
+
+    # Update package.json with the new pre-release version without creating a git tag
+    - npm version "${PRE_RELEASE_VERSION}" --no-git-tag-version
+
+    # Publish to Verdaccio with the modified version
     - npm publish --registry https://dev-verdaccio.irrational.cc
   only:
     - dev-release
