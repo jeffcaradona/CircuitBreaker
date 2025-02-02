@@ -17,7 +17,7 @@ test:
 sonarqube-check:
   stage: sonarqube
   image: 
-    name: sonarsource/sonar-scanner-cli:4.6
+    name: sonarsource/sonar-scanner-cli:5.0
     entrypoint: [""]
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
