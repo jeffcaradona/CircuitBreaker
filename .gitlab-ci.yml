@@ -19,21 +19,23 @@ sonarqube-check:
   image: node:22
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
-    TMPDIR: "/tmp"   # Use system temp directory
+    TMPDIR: "/tmp"
     GIT_DEPTH: "0"
     SONAR_HOST_URL: "https://dev-sonar.irrational.cc"
     SONAR_TOKEN: "${SONAR_TOKEN}"
   before_script:
     - npm install -g sonarqube-scanner
-    - chmod -R 777 /tmp   # Ensure /tmp is writable
+  - rm -rf .sonar   # Clear previous SonarQube data    
+    - chmod -R 777 /tmp
   script:
-    - sonar-scanner -X
+    - sonar-scanner -Djava.io.tmpdir=/tmp -Dsonar.scanner.tempDir=/tmp -X
   allow_failure: true
   only:
     - dev-release
     - develop
   dependencies:
     - test
+
 
 
 
