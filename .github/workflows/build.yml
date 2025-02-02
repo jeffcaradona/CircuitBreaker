@@ -1,39 +1,66 @@
-name: Build-Main
+name: Build and Analyze
+
 on:
   push:
     branches:
       - main
+      - develop
+      - release
   pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
   sonarqube:
-    name: SonarQube
+    name: SonarQube Analysis
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Shallow clones should be disabled for better analysis
-          
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '22'
-          
+
       - name: Install dependencies
         run: npm install
-        
+
       - name: Run coverage
         run: npm run coverage
-        
+
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4  # Updated to v4
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage/lcov.info
-          
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+  publish:
+    name: Publish to NPM
+    needs: sonarqube
+    runs-on: windows-latest
+    if: github.ref == 'refs/heads/release'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify npm package contents
+        run: npm pack --dry-run
+
+      - name: Publish to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
