@@ -1,6 +1,6 @@
 {
   "name": "@jeffcaradona/circuit-breaker",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "A ChatGPT assisted thread safe Circuit Breaker pattern to run in Multi-Threaded Node.js Applications",
   "type": "module",
   "main": "./src/CircuitBreaker.js",
@@ -24,6 +24,9 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/jeffcaradona/CircuitBreaker/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "homepage": "https://github.com/jeffcaradona/CircuitBreaker#readme",
   "devDependencies": {
