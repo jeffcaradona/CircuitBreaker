@@ -19,14 +19,13 @@ sonarqube-check:
   image: node:22
   variables:
     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
-    TMPDIR: "${CI_PROJECT_DIR}/.sonar/_tmp"  # Explicitly define temp directory
+    TMPDIR: "/tmp"   # Use system temp directory
     GIT_DEPTH: "0"
     SONAR_HOST_URL: "https://dev-sonar.irrational.cc"
     SONAR_TOKEN: "${SONAR_TOKEN}"
   before_script:
     - npm install -g sonarqube-scanner
-    - mkdir -p .sonar/_tmp
-    - chmod -R 777 .sonar
+    - chmod -R 777 /tmp   # Ensure /tmp is writable
   script:
     - sonar-scanner -X
   allow_failure: true
@@ -35,6 +34,7 @@ sonarqube-check:
     - develop
   dependencies:
     - test
+
 
 
 
