@@ -1,0 +1,7 @@
+# Exclude coverage reports and node_modules
+coverage/
+node_modules/
+.github/
+.git/
+test/
+*.log
