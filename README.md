@@ -98,7 +98,7 @@ Returns the total number of successful task executions.
 
 ## Example with Metrics
 
-```javascript
+``` javascript
 const sharedArray = new Int32Array(
   new SharedArrayBuffer(
     Object.keys(CircuitBreakerKeys).length * Int32Array.BYTES_PER_ELEMENT

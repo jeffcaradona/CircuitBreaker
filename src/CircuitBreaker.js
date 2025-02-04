@@ -180,7 +180,7 @@ class CircuitBreaker {
   getSuccessCount() {
     return Atomics.load(this.sharedArray, CircuitBreakerKeys.SUCCESS_COUNT);
   }
-    /**
+  /**
    * Get the timestamp of the last successful task execution.
    * @returns {number} The last success time as a Unix timestamp (milliseconds since epoch).
    */
@@ -195,7 +195,6 @@ class CircuitBreaker {
   getLastFailureTime() {
     return Atomics.load(this.sharedArray, CircuitBreakerKeys.LAST_FAILURE_TIME);
   }
-
 }
 
 export default CircuitBreaker;

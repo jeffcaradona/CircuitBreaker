@@ -232,6 +232,4 @@ describe("CircuitBreaker", () => {
     Atomics.store(sharedArray, CircuitBreakerKeys.SUCCESS_COUNT, 3);
     expect(circuitBreaker.getSuccessCount()).to.equal(3);
   });
-
-  
 });

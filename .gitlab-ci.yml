@@ -1,16 +1,15 @@
-image: 
-    name: sonarsource/sonar-scanner-cli:11
-    entrypoint: [""]
+image:
+  name: sonarsource/sonar-scanner-cli:11
+  entrypoint: [""]
 
 variables:
-  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-  GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar" # Defines the location of the analysis task cache
+  GIT_DEPTH: "0" # Tells git to fetch all the branches of the project, required by the analysis task
 
 stages:
   - test
   - build-sonar
   - publish-dev-release
-
 
 test:
   stage: test
@@ -33,7 +32,7 @@ build-sonar:
     paths:
       - "${SONAR_USER_HOME}/cache"
       - sonar-scanner/
-  script: 
+  script:
     - sonar-scanner -Dsonar.host.url="${SONAR_HOST_URL}"
   allow_failure: true
   rules:
@@ -41,8 +40,6 @@ build-sonar:
     - if: $CI_COMMIT_BRANCH == 'dev-release'
     - if: $CI_COMMIT_BRANCH == 'develop'
     - if: $CI_COMMIT_BRANCH == 'main'
-
-
 
 publish:
   stage: publish-dev-release
@@ -54,7 +51,7 @@ publish:
 
     # Extract the current version from package.json
     - VERSION=$(node -p "require('./package.json').version")
-    
+
     # Append the CI_PIPELINE_ID to create the pre-release version
     - PRE_RELEASE_VERSION="${VERSION}-${CI_PIPELINE_ID}"
 
